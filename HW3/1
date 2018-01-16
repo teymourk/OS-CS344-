@@ -1,0 +1,93 @@
+Pre-script Info
+PID: 29833
+: 
+: BEGINNING TEST SCRIPT - MAX 150 POINTS (10 more points for comments)
+: 
+: 
+: --------------------
+: ls (10 points for returning dir contents)
+: 1
+p3testscript
+readme.txt
+smallsh
+smallsh.c
+: 
+: 
+: --------------------
+: ls out junk
+: : 
+: 
+: --------------------
+: cat junk (20 points for correctly returning contents of junk)
+: 1
+junk
+p3testscript
+readme.txt
+smallsh
+smallsh.c
+: 
+: 
+: --------------------
+: wc in junk (20 points for returning correct numbers from wc)
+:  6  6 49
+: 
+: 
+: --------------------
+: test -f badfile (10 points for returning error value of 1)
+: : exit value 1
+: 
+: 
+: --------------------
+: wc in badfile (10 points for returning text error)
+:    0    0    0
+ badfile: no such file or diretory
+: 
+: 
+: --------------------
+: badfile (10 points for returning text error)
+: Command not valid
+: 
+: 
+: --------------------
+: sleep 100 background (10 points for returning process ID of sleeper)
+: Background Pid is: 29876
+: 
+: 
+: --------------------
+: pkill -signal SIGTERM sleep (10 points for pid of killed process, 10 points for signal)
+: (Ignore message about Operation Not Permitted)
+: Background pid 29876 is done: terminated by signal 15.
+: 
+: 
+: --------------------
+: sleep 1 background (10 pts for pid of bg ps when done, 10 for exit value)
+: Background Pid is: 29887
+: Background pid 29887 is done: exit value 0
+: 
+: 
+: --------------------
+: pwd
+: /nfs/stak/students/t/teymourk/HW3
+: 
+: 
+: --------------------
+: cd
+: : 
+: 
+: --------------------
+: pwd (10 points for being in the HOME dir)
+: /nfs/stak/students/t/teymourk
+: 
+: 
+: --------------------
+: mkdir testdir29833
+: : 
+: 
+: --------------------
+: cd testdir29833
+: : 
+: 
+: --------------------
+: pwd (10 points for being in the newly created dir)
+: /nfs/stak/students/t/teymourk/testdir29833
+: 

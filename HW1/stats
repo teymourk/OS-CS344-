@@ -1,0 +1,251 @@
+#!/bin/bash
+
+datafilepath="datafilepath$$"
+
+#trap signal for after when the script is killed
+trap "rm -f *temp* *data*; exit 1" SIGTERM SIGINT
+
+#conditions to see if the user is stdin or reading from the file
+if [ "$#" = "1" ]
+then
+	cat > "$datafilepath"
+
+elif [ "$#" = "2" ]
+then 
+	datafilepath="$2"
+elif [ "$#" = "3" ]
+then
+	echo "Extra argument" 1>&2
+	exit 1
+fi
+
+#storing the file name user has entered
+filename=$2
+
+#creating the temp files with unique ID
+temprowfile="temprowfile$$"
+tempcolfile="tempcolfile$$"
+temcolmedian="tempcolmedian$$"
+
+#row and colum counter
+rows_columsCounter=0
+columnsMidNumber=0
+
+#check to see if file exists that user is inputing
+if [ -f $filename ]
+then
+	
+		#finding the number of rows in the table 
+		if [ -f "$datafilepath" ]
+		then
+			#checks to see if file is readable.
+			if [ -r "$datafilepath" ]
+			then
+
+				#get the number of rows per file 
+				numberOfRows=$(wc -l < $datafilepath)
+				#get the number of columns per file 
+				numberOfColums=$(awk '{print NF}' $datafilepath | sort -nu | tail -n 1)
+
+				#if file is not empty and has value.
+				#could also use -s for file exisiting 
+				#and not empty
+				if [[ $numberOfColums -ne 0 ]]
+				then
+
+					#find the Median for the rows
+					rowsHalf=`expr $numberOfRows / 2`
+					rowsMidNumber=`expr $rowsHalf + 1`
+
+					#finds the Median for the columns
+					columsHalf=`expr $numberOfColums / 2`
+					columnsMidNumber=`expr $columsHalf + 1`
+				else
+					echo "stats: empty data set" 1>&2
+					exit 1
+				fi
+
+				else
+
+					#if file is not readable
+					echo "Stats: cannot read $filename" 1>&2
+					rm -f *data*
+					exit 1
+			fi
+		fi
+else 
+
+	#error message for file not exisitng
+	echo "$filename doesnt exist" 1>&2
+	exit 1
+fi
+
+#if user enters lower case r it calculates row
+if [[ $1 == -r* ]];
+then
+	
+	if [[ $numberOfColums -ne 0 ]]
+	then
+
+		#check to see if file exists
+		if [ -f $filename ]
+		then
+			#inputing the txt in the temp row file
+			echo -e "Average  Median" >> $temprowfile
+		else 
+			echo "$filename doesnt exist" 1>&2
+			exit 
+		fi
+	fi
+
+	#looping through all the rows 
+	while [ "$rows_columsCounter" -ne "$numberOfRows" ] 
+	do
+
+	rows_columsCounter=`expr $rows_columsCounter + 1`
+
+	lineSum=0
+	count=0
+	counter=0
+	median=""
+
+		#looping through all the rows to get the values and sorting them
+		for rows in $(sed -n "$rows_columsCounter p" $datafilepath | tr '\t' '\n' | sort -n)
+		do 
+
+			#finding the index for the Median
+			for i in $rows
+			do
+				counter=`expr $count + 1`
+
+				#displays all the numbers with index 3
+				if [[ $counter == $rowsMidNumber ]];
+					then
+					median="$i"
+				fi
+			done
+
+				#calculating the sum of all the numbers for each rowa 
+				count=`expr $count + 1`
+				lineSum=`expr $lineSum + $rows`
+		done
+
+		#calculating the average for all the rows 
+		numbersSum="`expr $lineSum + $count / 2`"
+		average=`expr $numbersSum / $count` 
+
+		echo -e "$average \t $median" >> $temprowfile
+
+	done
+
+	if [[ $numberOfColums -ne 0 ]]
+	then
+
+		#Display all the content of the row file
+		while read myLine
+		do 
+			echo "$myLine" 
+
+		done < $temprowfile
+
+		rm -f *temp*
+		rm -f *datafilepath*
+	fi
+
+#Calculating the same table but for colums
+elif [[ $1 == -c* ]];
+then
+	
+		echo -e "Average: " >> $tempcolfile
+
+		if [[ $numberOfColums -ne 0 ]]
+		then
+	
+			while [ "$rows_columsCounter" -ne "$numberOfColums" ] 
+			do
+
+				rows_columsCounter=`expr $rows_columsCounter + 1`
+
+			lineSum=0
+			count=0
+			counter=0
+			median=""
+			firstIndex=0
+			secondIndex=0
+
+				#loops through all the colums 
+				for colums in $(cut -f $rows_columsCounter $datafilepath | sort -n)
+				do 
+
+					for i in $colums
+					do
+						counter=`expr $count + 1`
+
+						#it displays all the content for index 4
+						if [[ $counter == $columnsMidNumber ]];
+						then
+							echo -e "$i" >> $temcolmedian						
+						fi
+					done
+
+					count=`expr $count + 1`
+					lineSum=`expr $lineSum + $colums`
+
+				done
+
+				if [[ count -ne 0 ]]
+				then
+
+					numbersSum="`expr $lineSum + $count / 2`"
+					average=`expr $numbersSum / $count`
+				fi 
+	
+				echo -e "$average\n" | tr '\n' '\t'  >> $tempcolfile
+			done
+		fi
+
+	counters=0
+	
+	if [[ $numberOfColums -ne 0 ]]
+	then
+
+		#had to create this loop to be able to trick 
+		#my way into making the proper output for the 
+		#columns
+		while read i
+		do
+			counters=`expr $counters + 1`
+
+			#puts the median in to the file and goes
+			#one line down
+			if [[ $counters == 1 ]]
+			then
+				echo -e "\nMedian:" >> $tempcolfile
+			fi
+
+			#then it puts the data right below it
+			echo -e "$i	" | tr '\n' '\t' >> $tempcolfile	
+	
+		done < $temcolmedian
+
+			#for some reason unless i didnt skip to another line
+			#it wouldnt print the file
+			echo -e "\n	" >> $tempcolfile
+ 
+		#diplays everyhting in the tempco file
+		while read myLine
+		do 
+			echo "$myLine"
+
+		done < $tempcolfile
+	fi
+
+	rm -f *temp*
+
+#if user doesnt type -r* or -c* it displays an error.
+elif [[ $1 != -c* ]] || [[ $1 != -r* ]]
+then
+	echo  "Usage: stats {-rows|-cols} [file]" 1>&2
+	exit 1
+fi
+
